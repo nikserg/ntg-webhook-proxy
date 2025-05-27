@@ -1,2 +1,4 @@
 aiohttp
 aiogram
+asyncio
+contextlib

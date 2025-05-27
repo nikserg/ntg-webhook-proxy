@@ -18,6 +18,11 @@ MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
+logger.info(f"MAIN_SERVICE_URL: {MAIN_SERVICE_URL}\n"
+            f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}\n"
+            f"WEBHOOK_URL: {WEBHOOK_URL}"
+            )
+
 # Хранилище для отслеживания активной обработки сообщений
 active_chats = set()
 
@@ -32,15 +37,18 @@ else:
     storage = None
     dp = None
 
+
 async def keep_typing(chat_id: int, interval: float = 4.0):
     """Периодически отправляет статус 'печатает' в чат."""
     while True:
         await bot.send_chat_action(chat_id, "typing")
         await asyncio.sleep(interval)
 
+
 async def process_message_with_retries(message: Message):
     """Отправляет сообщение в основной сервис с повторными попытками."""
     return "Сообщение успешно обработано"
+
 
 @contextlib.asynccontextmanager
 async def typing_action(chat_id: int):
@@ -52,6 +60,7 @@ async def typing_action(chat_id: int):
         task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await task
+
 
 @dp.message()
 async def handle_message(message: Message):
