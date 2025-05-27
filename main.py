@@ -50,7 +50,7 @@ async def keep_typing(chat_id: int, interval: float = 4.0):
 async def process_message_with_retries(message: Message):
     """Отправляет сообщение в основной сервис с повторными попытками."""
 
-    max_retries = 3
+    max_retries = 100
     retry_delay = 1.0  # начальная задержка в секундах
 
     # Подготовка данных для отправки
@@ -66,7 +66,7 @@ async def process_message_with_retries(message: Message):
                 async with session.post(
                         MAIN_SERVICE_URL,
                         json=data,
-                        timeout=30  # таймаут запроса в секундах
+                        timeout=300  # таймаут запроса в секундах
                 ) as response: # type: ClientResponse
                     if response.status == 200:
                         result = await response.text()
