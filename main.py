@@ -53,13 +53,19 @@ async def process_message_with_retries(message: Message):
     max_retries = 3
     retry_delay = 1.0  # начальная задержка в секундах
 
+    # Подготовка данных для отправки
+    data = {
+        "text": message.text,
+        "chat_id": message.chat.id
+    }
+
     # Выполняем запросы с повторными попытками
     for attempt in range(max_retries):
         try:
             async with ClientSession() as session:
                 async with session.post(
                         MAIN_SERVICE_URL,
-                        data=message.text,  # отправляем текст без изменений
+                        json=data,
                         timeout=30  # таймаут запроса в секундах
                 ) as response: # type: ClientResponse
                     if response.status == 200:
