@@ -87,6 +87,7 @@ async def handle_message(message: Message):
     try:
         async with typing_action(chat_id):
             response = await process_message_with_retries(message)
+            logging.info(f"Ответ для {chat_id}: {response}")
             await message.answer(response)
     finally:
         # Убираем чат из списка активных
