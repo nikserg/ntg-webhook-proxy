@@ -1,10 +1,11 @@
 import logging
+from asyncio import sleep
 import contextlib
 from aiogram import Bot, Dispatcher
 import os
 from aiogram.types import Message
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiohttp import web
+from aiohttp import web, ClientSession, ClientResponse
 from aiogram.webhook.aiohttp_server import setup_application, SimpleRequestHandler
 import asyncio
 
@@ -14,7 +15,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 # Получение URL основного сервиса и токена из переменных окружения
-MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL")
+MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL") + '/internal'
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 WEBHOOK_BASE = os.getenv("WEBHOOK_BASE", "")
 WEBHOOK_URL = WEBHOOK_BASE + "/webhook"
@@ -48,7 +49,34 @@ async def keep_typing(chat_id: int, interval: float = 4.0):
 
 async def process_message_with_retries(message: Message):
     """Отправляет сообщение в основной сервис с повторными попытками."""
-    return "Сообщение успешно обработано"
+
+    max_retries = 3
+    retry_delay = 1.0  # начальная задержка в секундах
+
+    # Выполняем запросы с повторными попытками
+    for attempt in range(max_retries):
+        try:
+            async with ClientSession() as session:
+                async with session.post(
+                        MAIN_SERVICE_URL,
+                        data=message.text,  # отправляем текст без изменений
+                        timeout=30  # таймаут запроса в секундах
+                ) as response: # type: ClientResponse
+                    if response.status == 200:
+                        result = await response.text()
+                        return result  # Возвращаем ответ от сервиса
+                    else:
+                        logging.warning(f"Получен статус {response.status} от сервиса на попытке {attempt + 1}")
+        except Exception as e:
+            logging.error(f"Ошибка при отправке запроса на попытке {attempt + 1}: {str(e)}")
+
+        # Если это не последняя попытка, делаем паузу перед следующей
+        if attempt < max_retries - 1:
+            # Увеличиваем задержку с каждой попыткой
+            await sleep(retry_delay * (2 ** attempt))
+
+    # Если все попытки исчерпаны, возвращаем сообщение об ошибке
+    return "[Ой! Кажется, у меня техническая проблема под кодовым названием Кокосик]"
 
 
 @contextlib.asynccontextmanager
