@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 # Получение URL основного сервиса и токена из переменных окружения
 MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+WEBHOOK_BASE = os.getenv("WEBHOOK_BASE", "")
+WEBHOOK_URL = WEBHOOK_BASE + "/webhook"
 
 logger.info(f"MAIN_SERVICE_URL: {MAIN_SERVICE_URL}\n"
             f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}\n"
@@ -112,7 +113,7 @@ app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
 if WEBHOOK_URL:
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_URL)
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
     setup_application(app, dp, bot=bot)
 
 if __name__ == "__main__":
