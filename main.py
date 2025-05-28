@@ -62,7 +62,9 @@ async def process_message_with_retries(message: Message):
     # Выполняем запросы с повторными попытками
     for attempt in range(max_retries):
         try:
-            async with ClientSession() as session:
+            # Явно указываем использование IPv6
+            connector = aiohttp.TCPConnector(family=socket.AF_INET6)
+            async with ClientSession(connector=connector) as session:
                 async with session.post(
                         MAIN_SERVICE_URL,
                         json=data,
