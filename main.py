@@ -5,9 +5,10 @@ from aiogram import Bot, Dispatcher
 import os
 from aiogram.types import Message
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiohttp import web, ClientSession, ClientResponse
+from aiohttp import web, ClientSession, ClientResponse, TCPConnector
 from aiogram.webhook.aiohttp_server import setup_application, SimpleRequestHandler
 import asyncio
+import socket
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO,
@@ -63,7 +64,7 @@ async def process_message_with_retries(message: Message):
     for attempt in range(max_retries):
         try:
             # Явно указываем использование IPv6
-            connector = aiohttp.TCPConnector(family=socket.AF_INET6)
+            connector = TCPConnector(family=socket.AF_INET6)
             async with ClientSession(connector=connector) as session:
                 async with session.post(
                         MAIN_SERVICE_URL,
@@ -129,20 +130,24 @@ async def handle_message(message: Message):
         # Убираем чат из списка активных
         active_chats.remove(chat_id)
 
+
+# Создание и запуск aiohttp-приложения
+async def on_startup(app):
+    if WEBHOOK_URL:
+        SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
+        setup_application(app, dp, bot=bot)
+        logging.info(f"Установка вебхука на {WEBHOOK_URL}")
+        await bot.set_webhook(WEBHOOK_URL)
+    else:
+        logging.warning("WEBHOOK_URL не указан. Вебхук не будет установлен.")
+
 async def on_shutdown(app):
     if WEBHOOK_URL:
         await bot.delete_webhook()
 
 app = web.Application()
+app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
 if __name__ == "__main__":
     web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
-    if WEBHOOK_URL:
-        SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-        setup_application(app, dp, bot=bot)
-        if WEBHOOK_URL:
-            logging.info(f"Установка вебхука на {WEBHOOK_URL}")
-            await bot.set_webhook(WEBHOOK_URL)
-        else:
-            logging.warning("WEBHOOK_URL не указан. Вебхук не будет установлен.")
