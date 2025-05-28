@@ -50,8 +50,8 @@ async def keep_typing(chat_id: int, interval: float = 4.0):
 async def process_message_with_retries(message: Message):
     """Отправляет сообщение в основной сервис с повторными попытками."""
 
-    max_retries = 50
-    retry_delay = 1.0  # начальная задержка в секундах
+    max_retries = 60  # максимальное количество попыток
+    retry_delay = 2  # задержка в секундах
 
     # Подготовка данных для отправки
     data = {
@@ -78,8 +78,7 @@ async def process_message_with_retries(message: Message):
 
         # Если это не последняя попытка, делаем паузу перед следующей
         if attempt < max_retries - 1:
-            # Увеличиваем задержку с каждой попыткой
-            await sleep(retry_delay * attempt)
+            await sleep(retry_delay)
 
     # Если все попытки исчерпаны, возвращаем сообщение об ошибке
     return "[Ой! Кажется, у меня техническая проблема под кодовым названием Кокосик]"
