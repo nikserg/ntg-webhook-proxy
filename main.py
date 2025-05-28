@@ -147,7 +147,7 @@ app = web.Application()
 # Регистрируем вебхук-обработчик ДО добавления хуков
 if WEBHOOK_URL and bot and dp:
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-    setup_application(app, dp, bot=bot
+    setup_application(app, dp, bot=bot)
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
