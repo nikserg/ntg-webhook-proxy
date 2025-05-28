@@ -74,7 +74,7 @@ async def process_message_with_retries(message: Message):
                     else:
                         logging.warning(f"Получен статус {response.status} от сервиса на попытке {attempt + 1}")
         except Exception as e:
-            logging.error(f"Ошибка при отправке запроса на попытке {attempt + 1}: {str(e)}")
+            logging.error(f"Ошибка при отправке запроса на попытке {attempt + 1}: {repr(e)}")
 
         # Если это не последняя попытка, делаем паузу перед следующей
         if attempt < max_retries - 1:
