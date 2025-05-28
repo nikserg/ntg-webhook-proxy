@@ -20,10 +20,12 @@ MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL") + '/internal'
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 WEBHOOK_BASE = os.getenv("WEBHOOK_BASE", "")
 WEBHOOK_URL = WEBHOOK_BASE + "/webhook"
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", 10))  # Максимальное количество попыток
 
 logger.info(f"MAIN_SERVICE_URL: {MAIN_SERVICE_URL}\n"
             f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}\n"
-            f"WEBHOOK_URL: {WEBHOOK_URL}"
+            f"WEBHOOK_URL: {WEBHOOK_URL}\n"
+            f"MAX_RETRIES: {MAX_RETRIES}\n"
             )
 
 # Хранилище для отслеживания активной обработки сообщений
@@ -51,7 +53,6 @@ async def keep_typing(chat_id: int, interval: float = 4.0):
 async def process_message_with_retries(message: Message):
     """Отправляет сообщение в основной сервис с повторными попытками."""
 
-    max_retries = 10  # максимальное количество попыток
     retry_delay = 3  # задержка в секундах
 
     # Подготовка данных для отправки
@@ -61,7 +62,7 @@ async def process_message_with_retries(message: Message):
     }
 
     # Выполняем запросы с повторными попытками
-    for attempt in range(max_retries):
+    for attempt in range(MAX_RETRIES):
         try:
             # Явно указываем использование IPv6
             connector = TCPConnector(family=socket.AF_INET6)
@@ -81,7 +82,7 @@ async def process_message_with_retries(message: Message):
             logging.error(f"Ошибка при отправке запроса на попытке {attempt + 1}: {repr(e)}")
 
         # Если это не последняя попытка, делаем паузу перед следующей
-        if attempt < max_retries - 1:
+        if attempt < MAX_RETRIES - 1:
             await sleep(retry_delay)
 
     # Если все попытки исчерпаны, возвращаем сообщение об ошибке
