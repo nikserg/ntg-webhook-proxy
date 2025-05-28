@@ -136,14 +136,13 @@ async def on_shutdown(app):
 app = web.Application()
 app.on_shutdown.append(on_shutdown)
 
-if WEBHOOK_URL:
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-    setup_application(app, dp, bot=bot)
-    if WEBHOOK_URL:
-        logging.info(f"Установка вебхука на {WEBHOOK_URL}")
-        await bot.set_webhook(WEBHOOK_URL)
-    else:
-        logging.warning("WEBHOOK_URL не указан. Вебхук не будет установлен.")
-
 if __name__ == "__main__":
     web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    if WEBHOOK_URL:
+        SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
+        setup_application(app, dp, bot=bot)
+        if WEBHOOK_URL:
+            logging.info(f"Установка вебхука на {WEBHOOK_URL}")
+            await bot.set_webhook(WEBHOOK_URL)
+        else:
+            logging.warning("WEBHOOK_URL не указан. Вебхук не будет установлен.")
