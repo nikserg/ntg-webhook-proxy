@@ -135,8 +135,22 @@ async def handle_message(message: Message):
 # Создание и запуск aiohttp-приложения
 async def on_startup(app):
     if WEBHOOK_URL:
-        logging.info(f"Установка вебхука на {WEBHOOK_URL}")
-        await bot.set_webhook(WEBHOOK_URL)
+        retry_count = 5
+        for attempt in range(retry_count):
+            try:
+                logging.info(f"Установка вебхука на {WEBHOOK_URL}, попытка {attempt + 1}/{retry_count}")
+                await bot.set_webhook(WEBHOOK_URL)
+                webhook_info = await bot.get_webhook_info()
+                if webhook_info.url == WEBHOOK_URL:
+                    logging.info(f"Вебхук успешно установлен на {WEBHOOK_URL}")
+                    return
+                logging.warning(f"Вебхук установлен некорректно: {webhook_info.url}")
+            except Exception as e:
+                logging.error(f"Ошибка при установке вебхука: {str(e)}")
+
+            await asyncio.sleep(5)  # Ждем 5 секунд перед повторной попыткой
+
+        logging.error(f"Не удалось установить вебхук после {retry_count} попыток")
     else:
         logging.warning("WEBHOOK_URL не указан. Вебхук не будет установлен.")
 
