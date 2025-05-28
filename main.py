@@ -66,6 +66,7 @@ async def process_message_with_retries(message: Message):
                 async with session.post(
                         MAIN_SERVICE_URL,
                         json=data,
+                        ssl=False,
                         timeout=300  # таймаут запроса в секундах
                 ) as response: # type: ClientResponse
                     if response.status == 200:
