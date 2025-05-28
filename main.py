@@ -51,7 +51,7 @@ async def keep_typing(chat_id: int, interval: float = 4.0):
 async def process_message_with_retries(message: Message):
     """Отправляет сообщение в основной сервис с повторными попытками."""
 
-    max_retries = 120  # максимальное количество попыток
+    max_retries = 10  # максимальное количество попыток
     retry_delay = 3  # задержка в секундах
 
     # Подготовка данных для отправки
