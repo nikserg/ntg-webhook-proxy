@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 # Получение URL основного сервиса и токена из переменных окружения
-MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL") + '/internal'
+MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 WEBHOOK_BASE = os.getenv("WEBHOOK_BASE", "")
 WEBHOOK_URL = WEBHOOK_BASE + "/webhook"
