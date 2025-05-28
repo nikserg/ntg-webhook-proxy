@@ -134,8 +134,6 @@ async def handle_message(message: Message):
 # Создание и запуск aiohttp-приложения
 async def on_startup(app):
     if WEBHOOK_URL:
-        SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-        setup_application(app, dp, bot=bot)
         logging.info(f"Установка вебхука на {WEBHOOK_URL}")
         await bot.set_webhook(WEBHOOK_URL)
     else:
@@ -146,6 +144,10 @@ async def on_shutdown(app):
         await bot.delete_webhook()
 
 app = web.Application()
+# Регистрируем вебхук-обработчик ДО добавления хуков
+if WEBHOOK_URL and bot and dp:
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
+    setup_application(app, dp, bot=bot
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
