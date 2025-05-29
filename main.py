@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 # Получение URL основного сервиса и токена из переменных окружения
 MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+DOWN_FOR_MAINTENANCE = os.getenv("DOWN_FOR_MAINTENANCE", "0") == "1"
+ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
 WEBHOOK_BASE = os.getenv("WEBHOOK_BASE", "")
 WEBHOOK_URL = WEBHOOK_BASE + "/webhook"
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", 10))  # Максимальное количество попыток
@@ -106,13 +108,20 @@ async def handle_message(message: Message):
     # Выходим, если бот не инициализирован (для тестов)
     if not bot:
         return
+    chat_id = message.chat.id
+
+    # Проверка на режим обслуживания
+    if DOWN_FOR_MAINTENANCE and chat_id != ADMIN_CHAT_ID:
+        await message.answer(
+            "[Техническое обслуживание бота. Пожалуйста, повторите сообщение через 5 минут. Не переживайте, ваш диалог не потеряется и продолжится с того же места.]")
+        return
 
     # Проверяем, является ли сообщение текстовым
     if not message.text:
         await message.answer("Только текстовые сообщения")
         return
     logging.info(f"Входящее сообщение от {message.chat.id}: {message.text}")
-    chat_id = message.chat.id
+
     # Проверяем, обрабатывается ли уже сообщение для данного чата
     if chat_id in active_chats:
         logging.info(f"Сообщение от {chat_id} проигнорировано, так как обработка уже идёт.")
