@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Получение URL основного сервиса и токена из переменных окружения
 MAIN_SERVICE_URL = os.getenv("MAIN_SERVICE_URL")
+MAIN_SERVICE_DEV_URL = os.getenv("MAIN_SERVICE_DEV_URL", MAIN_SERVICE_URL)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 DOWN_FOR_MAINTENANCE = os.getenv("DOWN_FOR_MAINTENANCE", "0") == "1"
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
@@ -63,6 +64,12 @@ async def process_message_with_retries(message: Message):
         "chat_id": message.chat.id
     }
 
+    # Для административного чата используем dev URL
+    if message.chat.id == ADMIN_CHAT_ID:
+        service_url = MAIN_SERVICE_DEV_URL
+    else:
+        service_url = MAIN_SERVICE_URL
+
     # Выполняем запросы с повторными попытками
     for attempt in range(MAX_RETRIES):
         try:
@@ -70,7 +77,7 @@ async def process_message_with_retries(message: Message):
             connector = TCPConnector(family=socket.AF_INET6)
             async with ClientSession(connector=connector) as session:
                 async with session.post(
-                        MAIN_SERVICE_URL,
+                        service_url,
                         json=data,
                         ssl=False,
                         timeout=300  # таймаут запроса в секундах
