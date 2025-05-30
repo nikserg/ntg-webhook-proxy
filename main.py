@@ -9,6 +9,8 @@ from aiohttp import web, ClientSession, ClientResponse, TCPConnector
 from aiogram.webhook.aiohttp_server import setup_application, SimpleRequestHandler
 import asyncio
 import socket
+import base64
+from aiogram.types import BufferedInputFile
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO,
@@ -83,7 +85,7 @@ async def process_message_with_retries(message: Message):
                         timeout=300  # таймаут запроса в секундах
                 ) as response: # type: ClientResponse
                     if response.status == 200:
-                        result = await response.text()
+                        result = await response.json()
                         return result  # Возвращаем ответ от сервиса
                     else:
                         logging.warning(f"Получен статус {response.status} от сервиса на попытке {attempt + 1}")
@@ -95,7 +97,7 @@ async def process_message_with_retries(message: Message):
             await sleep(retry_delay)
 
     # Если все попытки исчерпаны, возвращаем сообщение об ошибке
-    return "[Ой! Кажется, у меня техническая проблема под кодовым названием Кокосик]"
+    return {"text": "[Ой! Кажется, у меня техническая проблема под кодовым названием Кокосик]"}
 
 
 @contextlib.asynccontextmanager
@@ -142,7 +144,21 @@ async def handle_message(message: Message):
         async with typing_action(chat_id):
             response = await process_message_with_retries(message)
             logging.info(f"Ответ для {chat_id}: {response}")
-            await message.answer(response)
+            # JSON response
+            if "image" in response and response["image"]:
+                # Process base64 image with caption
+                image_data = base64.b64decode(response["image"])
+                caption = response.get("text", "")
+
+                # Create a BufferedInputFile directly from bytes
+                input_file = BufferedInputFile(image_data, filename="image.png")
+
+                await message.answer_photo(photo=input_file, caption=caption)
+            elif "text" in response:
+                # Text-only response
+                await message.answer(response["text"])
+            else:
+                await message.answer("[Ой! Кажется, у меня техническая проблема под кодовым названием Мандаринчик]")
     finally:
         # Убираем чат из списка активных
         active_chats.remove(chat_id)
